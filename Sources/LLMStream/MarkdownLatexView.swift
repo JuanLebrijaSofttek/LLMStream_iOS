@@ -8,6 +8,12 @@
 import SwiftUI
 import WebKit
 
+#if os(macOS)
+import AppKit
+#elseif os(iOS)
+import UIKit
+#endif
+
 #if os(iOS)
 public struct MarkdownLatexViewiOS: UIViewRepresentable, @preconcurrency MarkdownLatexViewShared {
     typealias ViewContext = Context
@@ -30,15 +36,15 @@ public struct MarkdownLatexViewiOS: UIViewRepresentable, @preconcurrency Markdow
         self.onUrlClicked = onUrlClicked
         self.onCodeAction = onCodeAction
     }
-
+    
     public func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     public func makeUIView(context: Context) -> WKWebView {
         return makeWebView(context: context)
     }
-
+    
     public func updateUIView(_ webView: WKWebView, context: Context) {
         if context.coordinator.lastContent != content {
             context.coordinator.lastContent = content
@@ -68,15 +74,15 @@ public struct MarkdownLatexViewMacOS: NSViewRepresentable, @preconcurrency Markd
         self.onUrlClicked = onUrlClicked
         self.onCodeAction = onCodeAction
     }
-
+    
     public func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     public func makeNSView(context: Context) -> WKWebView {
         return makeWebView(context: context)
     }
-
+    
     public func updateNSView(_ webView: WKWebView, context: Context) {
         context.coordinator.lastContent = content
         loadHTML(in: webView)
@@ -214,20 +220,20 @@ private extension MarkdownLatexViewShared {
         let webView = VerticalScrollPassthroughWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = coordinator
         webView.uiDelegate = coordinator
-        #if os(macOS)
+#if os(macOS)
         webView.setValue(false, forKey: "drawsBackground")
         webView.allowsMagnification = false
-        #else
+#else
         webView.isOpaque = false
         webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear
-        #endif
-
+#endif
+        
         coordinator.lastContent = content
         loadHTML(in: webView)
         return webView
     }
-
+    
     func loadHTML(in webView: WKWebView) {
         guard let bundlePath = Bundle.module.path(forResource: "markdownLatex", ofType: "html"),
               var htmlContent = try? String(contentsOfFile: bundlePath, encoding: .utf8) else {
@@ -242,7 +248,7 @@ private extension MarkdownLatexViewShared {
         // Si c'est le premier chargement, on charge la page HTML complète
         if !webView.isLoading && webView.url == nil {
             htmlContent = htmlContent.replacingOccurrences(of: "[TEXT]", with: encodedMarkdown)
-
+            
             let cssVariables = """
                 const styleElement = document.querySelector('style');
                 if (styleElement) {
@@ -272,19 +278,19 @@ private extension MarkdownLatexViewShared {
 
 // Common Coordinator class
 public class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
-    #if os(iOS)
+#if os(iOS)
     var parent: MarkdownLatexViewiOS
     
     init(_ parent: MarkdownLatexViewiOS) {
         self.parent = parent
     }
-    #else
+#else
     var parent: MarkdownLatexViewMacOS
     
     init(_ parent: MarkdownLatexViewMacOS) {
         self.parent = parent
     }
-    #endif
+#endif
     
     var lastContent: String = ""
     private var lastHeightUpdate: Date = .distantPast
@@ -303,8 +309,8 @@ public class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
             }
         }
         if message.name == "log" {
-             guard let message = message.body as? String else { return }
-             print("LLMStream - JS: " + message)
+            guard let message = message.body as? String else { return }
+            print("LLMStream - JS: " + message)
         }
         if message.name == "codeAction" {
             guard let code = message.body as? String else { return }
@@ -329,10 +335,22 @@ public class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     public func webView(_ webView: WKWebView,
                         decidePolicyFor navigationAction: WKNavigationAction,
                         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-
+        
         if let url = navigationAction.request.url,
            navigationAction.navigationType == .linkActivated {
-            NSWorkspace.shared.open(url)
+#if os(macOS)
+            // NSWorkspace code goes here
+            let workspace = NSWorkspace.shared
+            if let url = URL(string: "https://example.com") {
+                workspace.open(url)
+            }
+#elseif os(iOS)
+            // iOS-specific alternative goes here
+            if let url = URL(string: "https://example.com") {
+                UIApplication.shared.open(url)
+            }
+#endif
+            //NSWorkspace.shared.open(url)
             decisionHandler(.cancel)
         } else {
             decisionHandler(.allow)
@@ -344,7 +362,19 @@ public class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
                         for navigationAction: WKNavigationAction,
                         windowFeatures: WKWindowFeatures) -> WKWebView? {
         if let url = navigationAction.request.url {
-            NSWorkspace.shared.open(url)
+#if os(macOS)
+            // NSWorkspace code goes here
+            let workspace = NSWorkspace.shared
+            if let url = URL(string: "https://example.com") {
+                workspace.open(url)
+            }
+#elseif os(iOS)
+            // iOS-specific alternative goes here
+            if let url = URL(string: "https://example.com") {
+                UIApplication.shared.open(url)
+            }
+#endif
+            //NSWorkspace.shared.open(url)
         }
         
         return nil
