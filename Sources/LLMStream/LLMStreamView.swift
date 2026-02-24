@@ -10,7 +10,7 @@ import SwiftUI
 public struct LLMStreamView: View {
     let text: String
     let configuration: LLMStreamConfiguration
-    let onUrlClicked: ((String) -> Void)
+    let onUrlClicked: ((String) -> Void)?
     let onCodeAction: ((String) -> Void)?
     
     // ContentSegment represents either normal text or a thought block
