@@ -240,9 +240,36 @@ li {
     margin-bottom: 0.5em;
 }
 
+/* Generic scroll wrapper: tables, code, images, diagrams, any block that can overflow */
+.block-scroll-wrapper {
+    margin: 1em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    border-radius: var(--table-corner-radius, 5px);
+}
+
+.block-scroll-wrapper table {
+    margin: 0;
+    min-width: min-content;
+}
+
+.block-scroll-wrapper img,
+.block-scroll-wrapper svg {
+    display: block;
+    max-width: none;
+}
+
+.block-scroll-wrapper .code-container {
+    margin: 0;
+}
+
 .latex-table {
     margin: 1.5em 0;
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     max-width: 100%;
     border-radius: 5px;
     background-color: transparent;
@@ -288,7 +315,7 @@ table {
     width: 100%;
     background-color: transparent;
     border-radius: var(--table-corner-radius);
-    overflow: hidden;
+    overflow: visible;
     table-layout: auto;
     border: none;
     font-family: var(--table-font-family);

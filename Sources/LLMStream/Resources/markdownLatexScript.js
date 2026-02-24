@@ -296,9 +296,29 @@ function renderMarkdown() {
     window.lastProcessedContent = window.markdownContent;
 }
 
+/**
+ * Wrap blocks that can overflow (tables, code, images, diagrams, SVG, LaTeX figures, etc.)
+ * in a scrollable container so they stay visible and can scroll horizontally.
+ */
+function wrapOverflowBlocks(container) {
+    if (!container || !container.querySelectorAll) return;
+    const selectors = 'table, .code-container, img, svg, .latex-table, .latex-figure, .tcolorbox, mjx-container';
+    const toWrap = Array.from(container.querySelectorAll(selectors));
+    toWrap.forEach(function(el) {
+        if (el.closest('.block-scroll-wrapper')) return;
+        var wrapper = document.createElement('div');
+        wrapper.className = 'block-scroll-wrapper';
+        el.parentNode.insertBefore(wrapper, el);
+        wrapper.appendChild(el);
+    });
+}
+
 function renderLatex() {
+    var content = document.getElementById("content");
+    if (content) wrapOverflowBlocks(content);
     if (window.MathJax) {
         MathJax.typesetPromise().then(() => {
+            if (content) wrapOverflowBlocks(content);
             setTimeout(updateHeight, 200);
         });
     }
